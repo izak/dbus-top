@@ -6,7 +6,7 @@ A simple tool to watch the amount of traffic on dbus.
 
 This needs pyqt4. On a debian-type host you can install that with:
 
-    apt-get install python-qt4
+    apt-get install python-qt4 python-qt4-dbus
 
 ## Running against a remote dbus
 
