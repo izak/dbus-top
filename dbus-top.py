@@ -9,15 +9,15 @@ from threading import Thread
 
 import dbus
 
-from PyQt4.QtCore import QObject, QTimer, QAbstractTableModel, QModelIndex, Qt, QVariant
-from PyQt4.QtGui import QApplication, QTableView, QHeaderView
+from PyQt5.QtCore import QObject, QTimer, QAbstractTableModel, QModelIndex, Qt, QVariant
+from PyQt5.QtWidgets import QApplication, QTableView, QHeaderView
 
-from dbus.mainloop.qt import DBusQtMainLoop
+from dbus.mainloop.pyqt5 import DBusQtMainLoop
 
 class MonitorThread(Thread):
-    sender_re = re.compile(' sender=([^ ;]*)')
-    path_re = re.compile(' path=([^ ;]*)')
-    member_re = re.compile(' member=([^ ;]*)')
+    sender_re = re.compile(b' sender=([^ ;]*)')
+    path_re = re.compile(b' path=([^ ;]*)')
+    member_re = re.compile(b' member=([^ ;]*)')
 
     def __init__(self, cb, *args, **kwargs):
         super(MonitorThread, self).__init__(*args, **kwargs)
@@ -31,7 +31,7 @@ class MonitorThread(Thread):
         })
         line = self.proc.stdout.readline()
         while line:
-            if line.startswith('signal ') or line.startswith('method call '):
+            if line.startswith(b'signal ') or line.startswith(b'method call '):
                 sender = self.sender_re.search(line)
                 path = self.path_re.search(line)
                 member = self.member_re.search(line)
@@ -39,7 +39,7 @@ class MonitorThread(Thread):
                     sender = sender.group(1).strip()
                     path = path.group(1).strip()
                     member = member.group(1).strip()
-                    self.cb(member, sender, path)
+                    self.cb(member.decode('ascii'), sender.decode('ascii'), path.decode('ascii'))
 
             # Next line
             line = self.proc.stdout.readline()
@@ -130,7 +130,7 @@ class Services(QAbstractTableModel):
 
     def headerData(self, col, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return ["Service", "Path", "Count", "GetValue", "SetValue", "Frequency"][col]
+            return ["Service", "Path", "PropertiesChanged", "GetValue", "SetValue", "Frequency"][col]
         return QVariant()
 
     def sort(self, column, order):
@@ -192,7 +192,7 @@ def main(args):
     table = ServiceTable()
     table.setModel(services)
     table.resize(800, 600)
-    table.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
     table.show()
 
     # Use dbus-monitor to monitor things, because eavesdropping doesn't work and BecomeMonitor
