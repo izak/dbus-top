@@ -4,9 +4,11 @@ A simple tool to watch the amount of traffic on dbus.
 
 ## Requirements
 
-This needs pyqt4. On a debian-type host you can install that with:
+This needs pyqt5. On a debian-type host you can install that with:
 
-    apt-get install python-qt4 python-qt4-dbus
+    apt-get install python3-pyqt5 pyqt5-dev-tools qttools5-dev-tools
+    apt-get install python3-dbus.mainloop.pyqt5
+
 
 ## Running against a remote dbus
 
@@ -22,7 +24,7 @@ On the local host, map it back to a local socket:
 
 Run dbus-top.py against this socket by setting it in the environment:
 
-    DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/ccgx python dbus-top.py
+    DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/ccgx python3 dbus-top.py
 
 Caveat: You have to run the process as a user with the same uid as the one
 running socat on the remote end. On Venus this usually means `root`.
