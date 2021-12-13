@@ -48,7 +48,7 @@ class MonitorThread(Thread):
         self.proc.terminate()
 
 class Service(list):
-    _fields = dict(zip(("name", "path", "hits", "getvalue", "setvalue", "start"), count()))
+    _fields = dict(zip(("name", "path", "properties", "itemschanged", "getvalue", "setvalue", "start"), count()))
     def __init__(self, *args):
         super(Service, self).__init__(args)
 
@@ -95,14 +95,17 @@ class Services(QAbstractTableModel):
                     self.dataChanged.emit(idx, idx)
                     break
             else:
-                self.counts.append(Service(name, path, int(field=='hits'),
-                    int(field=='getvalue'), int(field=='setvalue'), time()))
+                self.counts.append(Service(name, path, int(field=='properties'),
+                    int(field=='itemschanged'), int(field=='getvalue'),
+                    int(field=='setvalue'), time()))
                 self.rowsInserted.emit(QModelIndex(), j, j)
 
     def cb(self, member, sender, path):
         path = '-' if self.summary else path
         if member == 'PropertiesChanged':
-            self.update_field('hits', sender, path)
+            self.update_field('properties', sender, path)
+        elif member == 'ItemsChanged':
+            self.update_field('itemschanged', sender, path)
         elif member == 'GetValue':
             self.update_field('getvalue', sender, path)
         elif member == 'SetValue':
@@ -112,7 +115,7 @@ class Services(QAbstractTableModel):
         return len(self.counts)
 
     def columnCount(self, parent=QModelIndex()):
-        return 6
+        return 7
 
     def data(self, index, role=Qt.DisplayRole):
         row = index.row()
@@ -120,9 +123,9 @@ class Services(QAbstractTableModel):
 
         v = self.counts[row]
         if role == Qt.DisplayRole:
-            if col == 5: # rate
+            if col == 6: # rate
                 interval = time() - v[col]
-                return round(sum(v[2:5])/interval, 2) if interval > 0 else 0
+                return round(sum(v[2:6])/interval, 2) if interval > 0 else 0
             else:
                 return v[col]
         else:
@@ -130,12 +133,12 @@ class Services(QAbstractTableModel):
 
     def headerData(self, col, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return ["Service", "Path", "PropertiesChanged", "GetValue", "SetValue", "Frequency"][col]
+            return ["Service", "Path", "PropertiesChanged", "ItemsChanged", "GetValue", "SetValue", "Frequency"][col]
         return QVariant()
 
     def sort(self, column, order):
         self.layoutAboutToBeChanged.emit()
-        if column == 5:
+        if column == 6:
             now = time()
             self.counts = sorted(self.counts, key=lambda x: now-x.start,
                 reverse=(order==Qt.DescendingOrder))
@@ -146,7 +149,7 @@ class Services(QAbstractTableModel):
 
     def update_data(self):
         if len(self.counts):
-            self.dataChanged.emit(self.createIndex(0, 5), self.createIndex(len(self.counts)-1, 5))
+            self.dataChanged.emit(self.createIndex(0, 6), self.createIndex(len(self.counts)-1, 6))
 
 
 def main(args):
